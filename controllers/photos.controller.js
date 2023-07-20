@@ -12,7 +12,14 @@ exports.add = async (req, res) => {
 
       const fileName = file.path.split('/').slice(-1)[0]; // cut only filename from full path, e.g. C:/test/abc.jpg -> abc.jpg
       const fileExt = fileName.split('.').slice(-1)[0];
-      if (fileExt[1] === '.jpg' || '.png' || '.gif') {
+      console.log(fileExt, fileName);
+      if (
+        (fileExt[1] === 'jpg' ||
+          fileExt[1] === 'png' ||
+          fileExt[1] === 'gif') &&
+        title.length <= 25 &&
+        author.length <= 50
+      ) {
         const newPhoto = new Photo({
           title,
           author,
