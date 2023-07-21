@@ -1,4 +1,5 @@
 const Photo = require('../models/photo.model');
+const Voter = require('../models/Voter.model');
 const sanitizeHtml = require('sanitize-html');
 
 // Function to validate email using regex
@@ -84,13 +85,33 @@ exports.loadAll = async (req, res) => {
 
 exports.vote = async (req, res) => {
   try {
+    const userIP = requestIp.getClientIp(req);
+    const findedUser = await Voter.findOne({ user: userIP });
     const photoToUpdate = await Photo.findOne({ _id: req.params.id });
-    if (!photoToUpdate) res.status(404).json({ message: 'Not found' });
-    else {
-      photoToUpdate.votes++;
-      photoToUpdate.save();
-      res.send({ message: 'OK' });
+
+    if (findedUser) {
+      const findedVote = findedUser.votes.includes(photoToUpdate._id);
+      if (findedUser) {
+        res.status(500).json({ message: 'You already voted!' });
+      } else if (!findedVote) {
+        await Voter.findOneAndUpdate(
+          { user: userIP },
+          { $push: { votes: photoToUpdate._id } },
+          () => {
+            photoToUpdate.votes++;
+            photoToUpdate.save();
+            res.send({ message: 'OK' });
+          }
+        );
+      }
+    } else if (!findedUser) {
+      const newVoter = newVoter({
+        user: userIP,
+        $push: { votes: photoToUpdate._id },
+      });
+      await newVoter.save();
     }
+    if (!photoToUpdate) res.status(404).json({ message: 'Not found' });
   } catch (err) {
     res.status(500).json(err);
   }
