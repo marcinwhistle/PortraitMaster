@@ -1,6 +1,7 @@
 const Photo = require('../models/photo.model');
 const Voter = require('../models/Voter.model');
 const sanitizeHtml = require('sanitize-html');
+const requestIp = require('request-ip');
 
 // Function to validate email using regex
 const isEmailValid = (email) => {
@@ -91,7 +92,7 @@ exports.vote = async (req, res) => {
 
     if (findedUser) {
       const findedVote = findedUser.votes.includes(photoToUpdate._id);
-      if (findedUser) {
+      if (findedVote) {
         res.status(500).json({ message: 'You already voted!' });
       } else if (!findedVote) {
         await Voter.findOneAndUpdate(
@@ -105,7 +106,7 @@ exports.vote = async (req, res) => {
         );
       }
     } else if (!findedUser) {
-      const newVoter = newVoter({
+      const newVoter = new Voter({
         user: userIP,
         $push: { votes: photoToUpdate._id },
       });
@@ -114,5 +115,6 @@ exports.vote = async (req, res) => {
     if (!photoToUpdate) res.status(404).json({ message: 'Not found' });
   } catch (err) {
     res.status(500).json(err);
+    console.log('Error', err);
   }
 };
